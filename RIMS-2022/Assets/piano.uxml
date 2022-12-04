@@ -1,0 +1,13 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/UI/piano.uss?fileID=7433441132597879392&amp;guid=0abd8e6e7f04f19479b08aa6242cfed3&amp;type=3#piano" />
+    <ui:VisualElement style="height: 447px; align-items: stretch; justify-content: center; flex-direction: row;">
+        <ui:Button text="C" display-tooltip-when-elided="true" name="C" class="white_key" />
+        <ui:Button text="B" display-tooltip-when-elided="true" name="B" class="white_key" />
+        <ui:Button text="A" display-tooltip-when-elided="true" name="A" class="white_key" />
+        <ui:Button text="G" display-tooltip-when-elided="true" name="G" class="white_key" />
+        <ui:Button text="F" display-tooltip-when-elided="true" name="F" class="white_key" />
+        <ui:Button text="E" display-tooltip-when-elided="true" name="E" class="white_key" />
+        <ui:Button text="D" display-tooltip-when-elided="true" name="D" class="white_key" />
+        <ui:Button text="C1" display-tooltip-when-elided="true" name="C1" class="white_key" />
+    </ui:VisualElement>
+</ui:UXML>

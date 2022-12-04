@@ -1,0 +1,15 @@
+.white_key {
+    width: auto;
+    background-color: rgba(255, 255, 255, 255);
+    color: rgba(0, 0, 0, 255);
+    -unity-text-align: lower-center;
+    font-size: 20px;
+}
+
+.black_key {
+    width: auto;
+    height: auto;
+    font-size: 12px;
+    -unity-text-align: middle-center;
+    overflow: visible;
+}
