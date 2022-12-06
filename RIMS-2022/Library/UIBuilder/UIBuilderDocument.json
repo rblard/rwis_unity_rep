@@ -43,13 +43,13 @@
                     "UxmlPath": "Assets/piano.uxml",
                     "CanvasX": 0,
                     "CanvasY": 0,
-                    "CanvasWidth": 1334,
-                    "CanvasHeight": 750,
+                    "CanvasWidth": 2205,
+                    "CanvasHeight": 1324,
                     "MatchGameView": true,
-                    "ZoomScale": 0.5,
+                    "ZoomScale": 0.25,
                     "PanOffset": {
-                        "x": 89.3333740234375,
-                        "y": 88.0333251953125
+                        "x": 136.9873046875,
+                        "y": 338.2833557128906
                     },
                     "ColorModeBackgroundOpacity": 1.0,
                     "ImageModeCanvasBackgroundOpacity": 1.0,
