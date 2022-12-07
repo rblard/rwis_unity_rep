@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">MidiFilePerformer</string>
+    <string name="instruction">Press the button below to generate a MIDI signal !</string>
+    <string name="button_label">PRESS</string>
+</resources>
