@@ -9,13 +9,22 @@ public class MidiMessage {
 
     public byte[] messageContents;
 
-    private byte[] onOrOffMessage(int pitch, int channel, int velocity){
-        byte[] noteOnContent = {};
-        ByteBuffer wrapper = ByteBuffer.wrap(noteOnContent);
+    private byte[] onOrOffMessage(MidiMessageType type, int pitch, int channel, int velocity){
+        ByteBuffer wrapper = ByteBuffer.allocate(3);
 
-        wrapper.putChar((char)(0x90+channel));
-        wrapper.putChar((char)pitch);
-        wrapper.putChar((char)velocity);
+        int commandID = 0;
+        switch(type){
+            case NOTE_OFF:
+                commandID = 0x80;
+                break;
+            case NOTE_ON:
+                commandID = 0x90;
+                break;
+        }
+
+        wrapper.put((byte)(commandID+channel));
+        wrapper.put((byte)pitch);
+        wrapper.put((byte)velocity);
 
         return wrapper.array();
     }
@@ -24,7 +33,7 @@ public class MidiMessage {
         switch(type){
             case NOTE_OFF:
             case NOTE_ON:
-                messageContents = onOrOffMessage(pitch,channel,velocity);
+                messageContents = onOrOffMessage(type,pitch,channel,velocity);
                 break;
         }
     }

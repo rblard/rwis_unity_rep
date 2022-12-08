@@ -1,0 +1,3 @@
+[submodule "libMidifilePerformer"]
+	path = libMidifilePerformer
+	url = git@github.com:scrime-u-bordeaux/libMidifilePerformer.git
