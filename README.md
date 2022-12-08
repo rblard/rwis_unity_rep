@@ -1,2 +1,3 @@
 # rwis_unity_rep
-Repository for development of a Unity-based Android app, as part of the Real-World Interactive System (RWIS) course dispensed by Prof. Yuta SUGIURA of Keio University (2022 Fall Semester)
+
+An independent Android port of the joint SCRIME/University of Bordeaux MidiFilePerformer project, developed as part of the Real World Interactive Systems course dispensed by Prof. Yuta SUGIURA of Keio University.
