@@ -13,6 +13,9 @@ import android.net.Uri;
 import android.view.MotionEvent;
 import android.widget.Button;
 
+import com.example.midifileperformer.nativewrap.CommandData;
+import com.example.midifileperformer.nativewrap.NativeManager;
+
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 
@@ -61,6 +64,7 @@ public class MainActivity extends AppCompatActivity {
             int actionType = event.getAction();
             if(actionType == MotionEvent.ACTION_DOWN) {
                 MidiMessage msg = new MidiMessage(MidiMessage.MidiMessageType.NOTE_ON,60,0,64);
+                CommandData cmd = NativeManager.convertMessageToCommandData(msg);
             }
             else if(actionType == MotionEvent.ACTION_UP || actionType == MotionEvent.ACTION_CANCEL) {
                 MidiMessage msg = new MidiMessage(MidiMessage.MidiMessageType.NOTE_OFF,60,0,64);

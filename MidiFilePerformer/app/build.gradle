@@ -45,8 +45,52 @@ dependencies {
     implementation 'com.google.android.material:material:1.5.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.3'
     implementation files('libs/android-midi-lib.jar')
+    implementation files('libs/javacpp.jar')
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.3'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
 
 }
+
+/*android.applicationVariants.all { variant ->
+    def variantName = variant.name.capitalize() // either "Debug" or "Release"
+    def javaCompile = project.tasks.getByName("compile${variantName}JavaWithJavac")
+    def configureCMake = project.tasks.findAll {
+        it.name.startsWith("configureCMake$variantName")
+    }
+
+    // Compiles NativeLibraryConfig.java
+    task "javacppCompileJava$variantName"(type: JavaCompile) {
+        include 'com/example/myapplication/NativeLibraryConfig.java'
+        source = javaCompile.source
+        classpath = javaCompile.classpath
+        destinationDir = javaCompile.destinationDir
+    }
+
+    // Parses NativeLibrary.h and outputs NativeLibrary.java
+    task "javacppBuildParser$variantName"(type: org.bytedeco.gradle.javacpp.BuildTask) {
+        dependsOn "javacppCompileJava$variantName"
+        classPath = [javaCompile.destinationDir]
+        includePath =  ["$projectDir/src/main/cpp/"]
+        classOrPackageNames = ['com.example.myapplication.NativeLibraryConfig']
+        outputDirectory = file("$projectDir/src/main/java/")
+    }
+
+    // Compiles NativeLibrary.java and everything else
+    javaCompile.dependsOn "javacppBuildParser$variantName"
+
+    // Generates jnijavacpp.cpp and jniNativeLibrary.cpp
+    task "javacppBuildCompiler$variantName"(type: org.bytedeco.gradle.javacpp.BuildTask) {
+        dependsOn javaCompile
+        classPath = [javaCompile.destinationDir]
+        classOrPackageNames = ['com.example.myapplication.NativeLibrary']
+        compile = false
+        deleteJniFiles = false
+        outputDirectory = file("$projectDir/src/main/cpp/")
+    }
+
+    // Picks up the C++ files listed in CMakeLists.txt
+    configureCMake.forEach {
+        it.dependsOn "javacppBuildCompiler$variantName"
+    }
+}*/
