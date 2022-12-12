@@ -22,6 +22,11 @@ public class MidiControl : MonoBehaviour
         Debug.Log(midiEventList.Count);
         Debug.Log(midiEventList[0]);
 
+        // Unify the Velocity
+        foreach(MPTKEvent midievent in midiEventList){
+            midievent.Velocity = 95;
+        }
+
         // Debug.Log(nameof(MPTKCommand.NoteOn));
         midiEventListIndex = 0;
     }
@@ -31,8 +36,12 @@ public class MidiControl : MonoBehaviour
     {
         if (Input.anyKeyDown)
         {   
+
+
             // Multiple key down
             // numberOfKeysPressed = 
+            // print(Input.inputString);
+
             // Testing on triggering a sequence of MPTKEvent
             midiStreamPlayer.MPTK_StartMidiStream();
             midiStreamPlayer.MPTK_PlayEvent(midiEventList[midiEventListIndex]);
