@@ -46,6 +46,7 @@ dependencies {
     implementation 'androidx.constraintlayout:constraintlayout:2.1.3'
     implementation files('libs/android-midi-lib.jar')
     implementation files('libs/javacpp.jar')
+    implementation files('libs/gradle-javacpp-1.5.8.jar')
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.3'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
@@ -61,7 +62,7 @@ dependencies {
 
     // Compiles NativeLibraryConfig.java
     task "javacppCompileJava$variantName"(type: JavaCompile) {
-        include 'com/example/myapplication/NativeLibraryConfig.java'
+        include 'com/example/midifileperformer/CommandData.java'
         source = javaCompile.source
         classpath = javaCompile.classpath
         destinationDir = javaCompile.destinationDir
@@ -72,7 +73,7 @@ dependencies {
         dependsOn "javacppCompileJava$variantName"
         classPath = [javaCompile.destinationDir]
         includePath =  ["$projectDir/src/main/cpp/"]
-        classOrPackageNames = ['com.example.myapplication.NativeLibraryConfig']
+        classOrPackageNames = ['com.example.midifileperformer.CommandData']
         outputDirectory = file("$projectDir/src/main/java/")
     }
 
@@ -83,7 +84,7 @@ dependencies {
     task "javacppBuildCompiler$variantName"(type: org.bytedeco.gradle.javacpp.BuildTask) {
         dependsOn javaCompile
         classPath = [javaCompile.destinationDir]
-        classOrPackageNames = ['com.example.myapplication.NativeLibrary']
+        classOrPackageNames = ['com.example.midifileperformer.CommandData']
         compile = false
         deleteJniFiles = false
         outputDirectory = file("$projectDir/src/main/cpp/")
