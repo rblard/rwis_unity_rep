@@ -10,7 +10,7 @@ public class MidiControl : MonoBehaviour
     private int midiEventListIndex;
     private List<MPTKEvent> midiEventList;
     private HashSet<KeyCode> keysToCheck = new HashSet<KeyCode>((KeyCode[])System.Enum.GetValues(typeof(KeyCode)));
-
+    private bool endLock;
     // Start is called before the first frame update
     void Start()
     {
@@ -30,47 +30,56 @@ public class MidiControl : MonoBehaviour
             midievent.Duration = -1;
         }
         
-
         // Debug.Log(nameof(MPTKCommand.NoteOn));
         midiEventListIndex = 0;
+
+        // Touch Settings:
+        Input.multiTouchEnabled = true;
+        Input.simulateMouseWithTouches = true;
+        endLock = true;
     }
 
     // Update is called once per frame
     void Update()
     {   
-        // Get Number of Key Pressed
-        // int numberOfKeysPressed;
-        // numberOfKeysPressed = keysToCheck.Count(key => Input.GetKey(key));
-        // Debug.Log(numberOfKeysPressed);
-        
-        // Muptiple Key Pressed Streaming Play Test
-        // if (Input.GetKeyDown(KeyCode.Space)){
-        //     midiStreamPlayer.MPTK_StartMidiStream();
-        //     List<MPTKEvent> subList = midiEventList.GetRange(1, 20);
-        //     midiStreamPlayer.MPTK_PlayEvent(subList);
-        // }
-
-        if (Input.anyKeyDown)
+        if (Input.touchCount > 0)
         {   
-            // Testing on triggering a sequence of MPTKEvent
-            midiStreamPlayer.MPTK_StartMidiStream();
-            midiStreamPlayer.MPTK_PlayEvent(midiEventList[midiEventListIndex]);
-            // Debug.Log(midiEventList[midiEventListIndex]);
-            midiEventListIndex += 1;  
-        }
-        
-        
-        // // Code triggering a single midi event.
-        // midiStreamPlayer.MPTK_StartMidiStream();
-        // MPTKEvent NotePlaying = new MPTKEvent() {
-        //     Command = MPTKCommand.NoteOn,
-        //     Value = 60, // play a C4 note
-        //     Channel = 0,
-        //     Duration = 1000, // one second
-        //     Velocity = 100 };
-        // midiStreamPlayer.MPTK_PlayEvent(NotePlaying);
+            int touchCount = Input.touchCount;
+            foreach(Touch touch in Input.touches){
 
-        // midiFilePlayer.MPTK_Play();
-        // Debug.Log(midiFilePlayer.MPTK_MidiEvents);
+                // Touch touch = Input.GetTouch(0);
+
+                // Current Event
+                MPTKEvent CurrentEvent = midiEventList[midiEventListIndex];
+
+                if (endLock){
+                    endLock = false;
+                    midiStreamPlayer.MPTK_StartMidiStream();
+                    midiStreamPlayer.MPTK_PlayEvent(CurrentEvent);
+                }                
+
+                Debug.Log(touch.phase);
+                Debug.Log(CurrentEvent);
+
+                if(touch.phase == TouchPhase.Ended){  
+                    midiStreamPlayer.MPTK_StartMidiStream();
+                    CurrentEvent.Command = MPTKCommand.NoteOff;
+                    midiStreamPlayer.MPTK_PlayEvent(CurrentEvent);
+                    midiEventListIndex += 1;
+                    endLock = true;
+                }
+            }
+        }
+
+        // if (Input.anyKeyDown)
+        // {   
+        //     // Testing on triggering a sequence of MPTKEvent
+        //     midiStreamPlayer.MPTK_StartMidiStream();
+        //     midiStreamPlayer.MPTK_PlayEvent(midiEventList[midiEventListIndex]);
+        //     // Debug.Log(midiEventList[midiEventListIndex]);
+        //     midiEventListIndex += 1;  
+        // }
+        
+
     }
 }

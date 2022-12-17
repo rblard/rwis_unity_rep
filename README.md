@@ -28,8 +28,14 @@ The basic idea is
       
       2. Play the offlist<MPTKEvent> to cut off the note
 
-
-
 2022.12.12:
 
 Need to find way to precisely control Unity Input.
+
+
+
+1. Key down
+   
+   1. Detect Key ID, Send Noteon to Lib (Unity)
+   
+   2. The Lib, 
