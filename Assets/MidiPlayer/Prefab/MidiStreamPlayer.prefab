@@ -27,6 +27,7 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 4383479756525956}
   m_Father: {fileID: 4977113046780174}
@@ -79,6 +80,7 @@ Transform:
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 4217309516267254}
   m_RootOrder: 0
@@ -272,6 +274,7 @@ Transform:
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 4705791444233294}
   - {fileID: 4217309516267254}
@@ -401,48 +404,6 @@ MonoBehaviour:
   spatialize: 0
   AudioBufferLenght: 0
   AudioNumBuffers: 0
-  MPTK_ApplySFFilter: 0
-  MPTK_SFFilterFreqOffset: 0
-  filterQModOffset: 0
-  MPTK_ApplySFReverb: 0
-  MPTK_SFReverbAmplify: 0
-  MPTK_ApplySFChorus: 0
-  MPTK_SFChorusAmplify: 0
-  sfReverbRoomSize: 0.2
-  sfReverbDamp: 0
-  sfReverbWidth: 0.5
-  sfReverbLevel: 0.9
-  sfChorusLevel: 0.9
-  sfChorusSpeed: 0.3
-  sfChorusDepth: 8
-  sfChorusWidth: 10
-  applyReverb: 0
-  reverbRoom: 0.9
-  reverbRoomHF: 0.99
-  reverbRoomLF: 1
-  reverbReflectionLevel: 0.67254543
-  reverbReflectionDelay: 0
-  reverbDryLevel: 1
-  reverbDecayTime: 1.49
-  reverbDecayHFRatio: 0.83
-  reverbLevel: 0.85
-  reverbDelay: 0.011
-  reverbHfReference: 5000
-  reverbLfReference: 250
-  reverbDiffusion: 1
-  reverbDensity: 1
-  applyChorus: 0
-  chorusDryMix: 0.5
-  chorusWetMix1: 0.5
-  chorusWetMix2: 0.5
-  chorusWetMix3: 0.5
-  chorusDelay: 40
-  chorusRate: 0.8
-  chorusDepth: 0.03
-  MPTK_ModeSpatializer: 0
-  MPTK_MaxSpatialSynth: 0
-  MPTK_SpatialSynthEnabled: 0
-  MPTK_LogChord: 0
 --- !u!82 &82252122336247308
 AudioSource:
   m_ObjectHideFlags: 0
@@ -604,6 +565,7 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 4977113046780174}
   m_RootOrder: 0
@@ -626,4 +588,3 @@ MonoBehaviour:
   InstanceOnEventPresetLoaded:
     m_PersistentCalls:
       m_Calls: []
-  MPTK_LiveSoundFont: 
