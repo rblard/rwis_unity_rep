@@ -28,6 +28,7 @@
     <string>Baez Joan - Here's to You</string>
     <string>Baez Joan - Plaisir D'Amour</string>
     <string>Beattles - Michelle</string>
+    <string>bg_043</string>
     <string>Bizet - Arlesienne</string>
     <string>Bjork - Joga</string>
     <string>Bjork - Oh So Quiet</string>
