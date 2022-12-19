@@ -7,10 +7,19 @@ using System.Runtime.InteropServices;
 
 public class MainLogic : MonoBehaviour
 {
-    public MidiFileLoader midiFileLoader;
-    public MidiStreamPlayer midiStreamPlayer;
-    private List<MPTKEvent> midiEventList;
-    private bool isPressed;
+    // ------------------------------------------------------------------------
+    // ----------------------------COMPONENTS----------------------------------
+    // ------------------------------------------------------------------------
+
+    public MidiFileLoader midiFileLoader; // used to parse the MIDI file for us
+    public MidiStreamPlayer midiStreamPlayer; // used to transform a list of MIDI events into sound
+    private bool isPressed; // keeps track of screen press status
+
+    // ------------------------------------------------------------------------
+    // ----------------------------CONSTANTS-----------------------------------
+    // ------------------------------------------------------------------------
+
+    // The fixed size of the buffer array passed to the C++ side when using performer.render()
 
     private static readonly uint MAX_EVENT_AMOUNT = 4096;
     // Having more than 16*2*128 = 4096 events on one press would mean EVERY note on EVERY channel triggered on AND off...and then some !
@@ -22,31 +31,51 @@ public class MainLogic : MonoBehaviour
     private static readonly ulong COMMAND_MASK = 0xF0 << 16;
     private static readonly ulong CHANNEL_MASK = 0x0F << 16;
     private static readonly ulong NOTE_ON_VALUE = 0x90 << 16;
-    //private static readonly ulong NOTE_OFF_VALUE = 0x80 << 16;
+    //private static readonly ulong NOTE_OFF_VALUE = 0x80 << 16; // never used
 
     private static readonly ulong PITCH_MASK = 0xFF << 8;
     private static readonly ulong VELOCITY_MASK = 0xFF;
+
+    // ------------------------------------------------------------------------
+    // ---------------------------C++ LIB API----------------------------------
+    // ------------------------------------------------------------------------
+
+    // Static equivalent to performer.push()
+    // Push an event to the performer's chronology 
 
     [DllImport("libMidifilePerformer", EntryPoint = "pushMPTKEvent")]
 
     public static extern void pushMPTKEvent(long tick, bool pressed, int pitch, int channel, int velocity);
 
+    // Static equivalent of performer.finalize()
+    // Change performer's state from building a chronology to "ready to play"
+
     [DllImport("libMidifilePerformer", EntryPoint = "finalizePerformer")]
 
     public static extern void finalizePerformer();
+
+    // Static equivalent of performer.clear()
+    // Reset performer's state and clear its chronology
 
     [DllImport("libMidifilePerformer", EntryPoint = "clearPerformer")]
 
     public static extern void clearPerformer();
 
+    // Static equivalent of performer.render()
+    // Move one step forward in the chronology
+
     [DllImport("libMidifilePerformer", EntryPoint = "renderCommand")]
-    
-    // Welkin Note 2022-12-18: Original rederCommand
-    public static extern void renderCommand(bool pressed, uint ID, [Out, In] ulong[] dataContainer);
-    // public static extern void renderCommand(bool pressed, uint ID, out ulong[] dataContainer);
 
+    public static extern void renderCommand(bool pressed, uint ID, ulong[] dataContainer);
 
-    private MPTKEvent makeMPTKEvent(ulong data){ // we have to work with this, the normal constructor won't work !
+    // ------------------------------------------------------------------------
+    // ------------------------PRIVATE UTIL METHODS----------------------------
+    // ------------------------------------------------------------------------
+
+    // A "pseudo-constructor" that creates an MPTK event from a note on/off MIDI message stored as a ulong.
+    // That ulong was obtained from the NoteData struct on the C++ side.
+
+    private MPTKEvent makeMPTKEvent(ulong data){
         MPTKCommand commandValue;
 
         if((data & COMMAND_MASK) == NOTE_ON_VALUE) commandValue = MPTKCommand.NoteOn;
@@ -59,20 +88,15 @@ public class MainLogic : MonoBehaviour
 
         return new MPTKEvent() {
             Command = commandValue,
-            Value = pitchValue,
+            Value = pitchValue, // yeah okay this is ugly I'm sorry
             Channel = channelValue,
             Velocity = velocityValue,
-            Duration = -1
+            Duration = -1 // let the event last forever and if it's an on, only be terminated by its off event
         };
     }
 
     // Wrapper for performer.render().
-    // For now, since we can't distinguish between keys, only have one.
-    // Also once we can distinguish, we need to take note offs into account.
-    
-    // Also also : the array filling doesn't work yet. For some reason.
-    // Returning the first element of the vector works beautifully. 
-    // But of course, we want the whole vector ! That is not done yet.
+    // It collects the NoteData structs encoded as ulongs and translates them into MPTKEvents for the stream player.
 
     private List<MPTKEvent> getEventsFromNative(bool isPressed, uint fingerID)
     {
@@ -88,34 +112,30 @@ public class MainLogic : MonoBehaviour
         return returnedEvents;
     }
 
-    // Welkin Note 2022=12=18: a convertor turning fingerID to uint8
-    // private byte[] ByteConvertor(int inputValue){
-    //     byte[] intBytes = BitConverter.GetBytes(inputValue);
-    //     Array.Reverse(intBytes);
-    //     byte[] result = intBytes;
-    //     return result;
-    // }
+    // ------------------------------------------------------------------------
+    // --------------------------UNITY BEHAVIOUR-------------------------------
+    // ------------------------------------------------------------------------
 
     void Start()
     {
-        midiFileLoader.MPTK_MidiName = "bach";
+        midiFileLoader.MPTK_MidiName = "bach"; // TODO : can we load any file from device ?
         midiFileLoader.MPTK_Load();
-        midiEventList = midiFileLoader.MPTK_ReadMidiEvents();
+        List<MPTKEvent> midiEventList = midiFileLoader.MPTK_ReadMidiEvents();
 
-        clearPerformer();
+        clearPerformer(); // The C++ memory is NOT reallocated at each startup apparently ?
 
         foreach(MPTKEvent midiEvent in midiEventList)
         {
+            // Discard all non-note events
+            // TODO : do we actually need tempo events to convert to ms in order to prevent anti-shadowing ?
             if(!(midiEvent.Command == MPTKCommand.NoteOff) && !(midiEvent.Command == MPTKCommand.NoteOn)) continue;
-
-            print(midiEvent.ToString());
 
             bool pressed = (midiEvent.Command == MPTKCommand.NoteOn && midiEvent.Velocity != 0) ? true : false;
 
             pushMPTKEvent(midiEvent.Tick, pressed, midiEvent.Value, midiEvent.Channel, midiEvent.Velocity);
         }
 
-        finalizePerformer();
+        finalizePerformer(); // tell C++ performer we're ready to play
         
         // Welkin Note 2022-12-18: Touch input initial settings
         Input.multiTouchEnabled = true;
@@ -123,7 +143,6 @@ public class MainLogic : MonoBehaviour
         isPressed = false;
     }
 
-    // Update is called once per frame
     void Update()
     {   
         int touchCount = Input.touchCount;
@@ -156,11 +175,5 @@ public class MainLogic : MonoBehaviour
                 }
             }
         }
-
-        // Welkin Note 2022-12-18: Simple debug test
-        // if (Input.anyKeyDown){
-        //     List<MPTKEvent> eventsToPlay = getEventsFromNative(true, Convert.ToUInt16(1));
-        //     midiStreamPlayer.MPTK_PlayEvent(eventsToPlay);
-        // }
     }
 }
