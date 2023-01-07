@@ -7,6 +7,9 @@ using System.Runtime.InteropServices;
 
 public class MainLogic : MonoBehaviour
 {
+    // Welkin 2023-01-06 Debug
+    public AudioSource SEAudioSource;
+    
     // ------------------------------------------------------------------------
     // ----------------------------COMPONENTS----------------------------------
     // ------------------------------------------------------------------------
@@ -148,6 +151,9 @@ public class MainLogic : MonoBehaviour
         int touchCount = Input.touchCount;
 
         if(touchCount > 0){
+            // Welkin 2023-01-06 Debug
+            SEAudioSource.Play();
+
             foreach(Touch touch in Input.touches){
                 
                 // Welkin Note 2022-12-18: This won't work, the Update() will keep trigger the PlayEvent.
