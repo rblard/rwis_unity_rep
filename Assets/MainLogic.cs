@@ -10,7 +10,6 @@ public class MainLogic : MonoBehaviour
 {
     // Welkin 2023-01-07 Debug
     public AudioSource SEAudioSource;
-
     // ------------------------------------------------------------------------
     // ----------------------------COMPONENTS----------------------------------
     // ------------------------------------------------------------------------
@@ -47,28 +46,28 @@ public class MainLogic : MonoBehaviour
     // Static equivalent to performer.push()
     // Push an event to the performer's chronology 
 
-    [DllImport("libMidifilePerformer", EntryPoint = "pushMPTKEvent")]
+    [DllImport("libMidifilePerformer64", EntryPoint = "pushMPTKEvent")]
 
     public static extern void pushMPTKEvent(long tick, bool pressed, int pitch, int channel, int velocity);
 
     // Static equivalent of performer.finalize()
     // Change performer's state from building a chronology to "ready to play"
 
-    [DllImport("libMidifilePerformer", EntryPoint = "finalizePerformer")]
+    [DllImport("libMidifilePerformer64", EntryPoint = "finalizePerformer")]
 
     public static extern void finalizePerformer();
 
     // Static equivalent of performer.clear()
     // Reset performer's state and clear its chronology
 
-    [DllImport("libMidifilePerformer", EntryPoint = "clearPerformer")]
+    [DllImport("libMidifilePerformer64", EntryPoint = "clearPerformer")]
 
     public static extern void clearPerformer();
 
     // Static equivalent of performer.render()
     // Move one step forward in the chronology
 
-    [DllImport("libMidifilePerformer", EntryPoint = "renderCommand")]
+    [DllImport("libMidifilePerformer64", EntryPoint = "renderCommand")]
 
     public static extern void renderCommand(bool pressed, uint ID, ulong[] dataContainer);
 
@@ -113,6 +112,10 @@ public class MainLogic : MonoBehaviour
             MPTKEvent renderedEvent = makeMPTKEvent(data);
             returnedEvents.Add(renderedEvent);
         }
+        
+        // Welkin 2023-01-07 Debug
+        SEAudioSource.Play();
+
         return returnedEvents;
     }
 
@@ -152,8 +155,7 @@ public class MainLogic : MonoBehaviour
         int touchCount = Input.touchCount;
 
         if(touchCount > 0){
-            // Welkin 2023-01-07 Debug
-            SEAudioSource.Play();
+            
 
             foreach(Touch touch in Input.touches){
                 
