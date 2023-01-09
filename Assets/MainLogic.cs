@@ -46,28 +46,28 @@ public class MainLogic : MonoBehaviour
     // Static equivalent to performer.push()
     // Push an event to the performer's chronology 
 
-    [DllImport("libMidifilePerformer64", EntryPoint = "pushMPTKEvent")]
+    [DllImport("MidifilePerformer64", EntryPoint = "pushMPTKEvent")]
 
     public static extern void pushMPTKEvent(long tick, bool pressed, int pitch, int channel, int velocity);
 
     // Static equivalent of performer.finalize()
     // Change performer's state from building a chronology to "ready to play"
 
-    [DllImport("libMidifilePerformer64", EntryPoint = "finalizePerformer")]
+    [DllImport("MidifilePerformer64", EntryPoint = "finalizePerformer")]
 
     public static extern void finalizePerformer();
 
     // Static equivalent of performer.clear()
     // Reset performer's state and clear its chronology
 
-    [DllImport("libMidifilePerformer64", EntryPoint = "clearPerformer")]
+    [DllImport("MidifilePerformer64", EntryPoint = "clearPerformer")]
 
     public static extern void clearPerformer();
 
     // Static equivalent of performer.render()
     // Move one step forward in the chronology
 
-    [DllImport("libMidifilePerformer64", EntryPoint = "renderCommand")]
+    [DllImport("MidifilePerformer64", EntryPoint = "renderCommand")]
 
     public static extern void renderCommand(bool pressed, uint ID, ulong[] dataContainer);
 
@@ -103,6 +103,9 @@ public class MainLogic : MonoBehaviour
 
     private List<MPTKEvent> getEventsFromNative(bool isPressed, uint fingerID)
     {
+        // Welkin 2023-01-07 Debug
+        SEAudioSource.Play();
+        
         ulong[] dataContainer = new ulong[MAX_EVENT_AMOUNT];
         renderCommand(isPressed, fingerID, dataContainer); 
         List<MPTKEvent> returnedEvents = new List<MPTKEvent>();
@@ -113,8 +116,7 @@ public class MainLogic : MonoBehaviour
             returnedEvents.Add(renderedEvent);
         }
         
-        // Welkin 2023-01-07 Debug
-        SEAudioSource.Play();
+        
 
         return returnedEvents;
     }
@@ -128,6 +130,10 @@ public class MainLogic : MonoBehaviour
         midiFileLoader.MPTK_MidiName = "bach"; // TODO : can we load any file from device ?
         midiFileLoader.MPTK_Load();
         List<MPTKEvent> midiEventList = midiFileLoader.MPTK_ReadMidiEvents();
+        
+        // Welkin 2023-01-10 Debug
+		GUI.Label(new Rect (15, 125, 450, 100), "On Start(): First MPTKEvent is " + midiEventList[0]);
+
 
         clearPerformer(); // The C++ memory is NOT reallocated at each startup apparently ?
 
@@ -148,6 +154,7 @@ public class MainLogic : MonoBehaviour
         Input.multiTouchEnabled = true;
         Input.simulateMouseWithTouches = true;
         isPressed = false;
+
     }
 
     void Update()
@@ -185,4 +192,12 @@ public class MainLogic : MonoBehaviour
             }
         }
     }
+
+    // Welkin 2023-01-10 Debug
+    // void OnGUI ()
+	// {
+	// 	float x = 3;
+	// 	float y = 10;
+	// 	GUI.Label(new Rect (15, 125, 450, 100), "adding " + x  + " and " + y + " in native code equals");
+	// }
 }
