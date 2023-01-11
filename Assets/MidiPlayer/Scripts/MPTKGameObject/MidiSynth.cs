@@ -1,4 +1,4 @@
-﻿//#define MPTK_PRO
+﻿#define MPTK_PRO
 //#define DEBUG_PERF_NOTEON // warning: generate heavy cpu use
 //#define DEBUG_PERF_AUDIO
 //#define DEBUG_PERF_MIDI

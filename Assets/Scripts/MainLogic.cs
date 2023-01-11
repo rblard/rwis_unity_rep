@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using MidiPlayerTK;
+using NativeFilePickerNamespace;
 using System.Runtime.InteropServices;
 
 public class MainLogic : MonoBehaviour
@@ -16,6 +17,7 @@ public class MainLogic : MonoBehaviour
 
     public MidiFileLoader midiFileLoader; // used to parse the MIDI file for us
     public MidiStreamPlayer midiStreamPlayer; // used to transform a list of MIDI events into sound
+    private String midiFilePath = null; // current path of the MIDI file
     private bool isPressed; // keeps track of screen press status
 
     // ------------------------------------------------------------------------
@@ -75,6 +77,47 @@ public class MainLogic : MonoBehaviour
     // ------------------------PRIVATE UTIL METHODS----------------------------
     // ------------------------------------------------------------------------
 
+    // Called every time a new MIDI file is loaded in
+
+    private void refreshMidiFile(){
+        if(midiFilePath == null) return;
+
+        midiFileLoader.MPTK_Load(midiFilePath);
+        List<MPTKEvent> midiEventList = midiFileLoader.MPTK_ReadMidiEvents();
+
+        clearPerformer(); 
+
+        foreach(MPTKEvent midiEvent in midiEventList)
+        {
+            // Discard all non-note events
+            // TODO : do we actually need tempo events to convert to ms in order to prevent anti-shadowing ?
+            if(!(midiEvent.Command == MPTKCommand.NoteOff) && !(midiEvent.Command == MPTKCommand.NoteOn)) continue;
+
+            bool pressed = (midiEvent.Command == MPTKCommand.NoteOn && midiEvent.Velocity != 0) ? true : false;
+
+            pushMPTKEvent(midiEvent.Tick, pressed, midiEvent.Value, midiEvent.Channel, midiEvent.Velocity);
+        }
+
+        finalizePerformer(); // tell C++ performer we're ready to play
+    }
+
+    // Wrapper around the NativeFilePicker library to update the current file path
+    // End with a refresh
+
+    public void loadFile(){
+        if(NativeFilePicker.IsFilePickerBusy()) return;
+
+        NativeFilePicker.Permission permission = NativeFilePicker.PickFile( 
+            (path) => {
+                if(path == null) return;
+                else midiFilePath = path;
+            },
+            new string[] {NativeFilePicker.ConvertExtensionToFileType("mid"), NativeFilePicker.ConvertExtensionToFileType("midi")}
+        );
+
+        refreshMidiFile();
+    }
+
     // A "pseudo-constructor" that creates an MPTK event from a note on/off MIDI message stored as a ulong.
     // That ulong was obtained from the NoteData struct on the C++ side.
 
@@ -121,25 +164,8 @@ public class MainLogic : MonoBehaviour
 
     void Start()
     {
-        midiFileLoader.MPTK_MidiName = "bach"; // TODO : can we load any file from device ?
-        midiFileLoader.MPTK_Load();
-        List<MPTKEvent> midiEventList = midiFileLoader.MPTK_ReadMidiEvents();
+        clearPerformer(); // apparently if we don't do this the file keeps its state between restarts ??? 
 
-        clearPerformer(); // The C++ memory is NOT reallocated at each startup apparently ?
-
-        foreach(MPTKEvent midiEvent in midiEventList)
-        {
-            // Discard all non-note events
-            // TODO : do we actually need tempo events to convert to ms in order to prevent anti-shadowing ?
-            if(!(midiEvent.Command == MPTKCommand.NoteOff) && !(midiEvent.Command == MPTKCommand.NoteOn)) continue;
-
-            bool pressed = (midiEvent.Command == MPTKCommand.NoteOn && midiEvent.Velocity != 0) ? true : false;
-
-            pushMPTKEvent(midiEvent.Tick, pressed, midiEvent.Value, midiEvent.Channel, midiEvent.Velocity);
-        }
-
-        finalizePerformer(); // tell C++ performer we're ready to play
-        
         // Welkin Note 2022-12-18: Touch input initial settings
         Input.multiTouchEnabled = true;
         Input.simulateMouseWithTouches = true;
@@ -152,8 +178,8 @@ public class MainLogic : MonoBehaviour
 
         if(touchCount > 0){
             // Welkin 2023-01-06 Debug
-            SEAudioSource.Play();
 
+            // SEAudioSource.Play();
             foreach(Touch touch in Input.touches){
                 
                 // Welkin Note 2022-12-18: This won't work, the Update() will keep trigger the PlayEvent.

@@ -1,4 +1,4 @@
-﻿//#define MPTK_PRO
+﻿#define MPTK_PRO
 #define DEBUG_START_MIDIx
 using UnityEngine;
 using System.Collections;

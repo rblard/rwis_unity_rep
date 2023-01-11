@@ -1,4 +1,4 @@
-﻿//#define MPTK_PRO
+﻿#define MPTK_PRO
 //#define DEBUGPERF
 //#define DEBUGTIME
 using System;

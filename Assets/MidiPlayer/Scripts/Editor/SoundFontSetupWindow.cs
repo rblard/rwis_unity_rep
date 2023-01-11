@@ -1,4 +1,4 @@
-﻿//#define MPTK_PRO
+﻿#define MPTK_PRO
 using System;
 using System.Collections.Generic;
 using MPTK.NAudio.Midi;
@@ -199,7 +199,7 @@ namespace MidiPlayerTK
                     content = new GUIContent() { text = "SoundFont available", tooltip = "Each SoundFonts contains a set of bank of sound. \nOnly one SoundFont can be active at the same time for the midi player" };
                 else
                 {
-                    content = new GUIContent() { text = "No SoundFont found, click on button 'Add SoundFont'", tooltip = "See the documentation here https://paxstellar.fr/" };
+                    content = new GUIContent() { text = "No SoundFont found, click on button 'Import SoundFont'", tooltip = "See the documentation here https://paxstellar.fr/" };
                     MidiPlayerGlobal.ImSFCurrent = null;
                 }
                 localstartX += xpostitlebox;

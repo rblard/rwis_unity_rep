@@ -1,4 +1,4 @@
-﻿//#define MPTK_PRO
+﻿#define MPTK_PRO
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
