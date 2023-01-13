@@ -17,7 +17,9 @@ public class MainLogic : MonoBehaviour
 
     public MidiFileLoader midiFileLoader; // used to parse the MIDI file for us
     public MidiStreamPlayer midiStreamPlayer; // used to transform a list of MIDI events into sound
+    public MidiExternalPlayer midiFilePlayer; // used to play back the file itself
     private String midiFilePath = null; // current path of the MIDI file
+    private bool isPlaybackActive = false; // used to prevent simultaneous tapping and playback
     private bool isPressed; // keeps track of screen press status
 
     // ------------------------------------------------------------------------
@@ -104,7 +106,12 @@ public class MainLogic : MonoBehaviour
         }
 
         finalizePerformer(); // tell C++ performer we're ready to play
+
+        // Stop both players
+
         midiStreamPlayer.MPTK_ClearAllSound();
+        midiFilePlayer.MPTK_Stop();
+        midiFilePlayer.MPTK_ClearAllSound();
     }
 
     // Wrapper around the NativeFilePicker library to update the current file path
@@ -116,12 +123,31 @@ public class MainLogic : MonoBehaviour
         NativeFilePicker.Permission permission = NativeFilePicker.PickFile( 
             (path) => {
                 if(path == null) return;
-                else midiFilePath = path;
+                else{
+                    midiFilePath = path;
+                    midiFilePlayer.MPTK_MidiName = "file://" + midiFilePath;
+                }
             },
             new string[] {NativeFilePicker.ConvertExtensionToFileType("mid"), NativeFilePicker.ConvertExtensionToFileType("midi")}
         );
 
         refreshMidiFile();
+    }
+
+    // Passive playback function used in the Play File button.
+
+    public void playFile(){
+        if(midiFilePlayer.MPTK_MidiName == null || midiFilePlayer.MPTK_MidiName == "") return;
+
+        if(isPlaybackActive){
+            isPlaybackActive = false;
+            midiFilePlayer.MPTK_Pause();
+        }
+
+        else{
+            isPlaybackActive = true;
+            midiFilePlayer.MPTK_Play();
+        }
     }
 
     // A "pseudo-constructor" that creates an MPTK event from a note on/off MIDI message stored as a ulong.
@@ -171,6 +197,7 @@ public class MainLogic : MonoBehaviour
     void Start()
     {
         clearPerformer(); // apparently if we don't do this the file keeps its state between restarts ??? 
+        midiStreamPlayer.MPTK_InitSynth();
 
         // Welkin Note 2022-12-18: Touch input initial settings
         Input.multiTouchEnabled = true;
@@ -182,7 +209,7 @@ public class MainLogic : MonoBehaviour
     {   
         int touchCount = Input.touchCount;
 
-        if(touchCount > 0){
+        if(touchCount > 0 && !isPlaybackActive){
             // Welkin 2023-01-06 Debug
 
             // SEAudioSource.Play();
