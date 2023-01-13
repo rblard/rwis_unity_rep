@@ -87,18 +87,24 @@ public class MainLogic : MonoBehaviour
 
         clearPerformer(); 
 
+        int latestEventTime = 0; // we're going to convert ticks to relative
+
         foreach(MPTKEvent midiEvent in midiEventList)
         {
             // Discard all non-note events
             // TODO : do we actually need tempo events to convert to ms in order to prevent anti-shadowing ?
             if(!(midiEvent.Command == MPTKCommand.NoteOff) && !(midiEvent.Command == MPTKCommand.NoteOn)) continue;
 
+            // Determine event type (on or off)
             bool pressed = (midiEvent.Command == MPTKCommand.NoteOn && midiEvent.Velocity != 0) ? true : false;
 
-            pushMPTKEvent(midiEvent.Tick, pressed, midiEvent.Value, midiEvent.Channel, midiEvent.Velocity);
+            int eventTickMs = Mathf.RoundToInt(midiEvent.RealTime);
+            pushMPTKEvent(eventTickMs - latestEventTime, pressed, midiEvent.Value, midiEvent.Channel, midiEvent.Velocity);
+            if(eventTickMs > latestEventTime) latestEventTime = eventTickMs;
         }
 
         finalizePerformer(); // tell C++ performer we're ready to play
+        midiStreamPlayer.MPTK_ClearAllSound();
     }
 
     // Wrapper around the NativeFilePicker library to update the current file path
