@@ -1,5 +1,6 @@
 using System.Collections;
 using System;
+using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
 using MidiPlayerTK;
@@ -79,6 +80,17 @@ public class MainLogic : MonoBehaviour
     // ------------------------PRIVATE UTIL METHODS----------------------------
     // ------------------------------------------------------------------------
 
+    // Debug function that imitates the Events::isStart method in the C++ library
+
+    private bool isStartingSet(List<MPTKEvent> midiEventList){
+
+        foreach(MPTKEvent midiEvent in midiEventList){
+            if(midiEvent.Command == MPTKCommand.NoteOn) return true;
+        }
+
+        return false;
+    }
+
     // Called every time a new MIDI file is loaded in
 
     private void refreshMidiFile(){
@@ -93,6 +105,14 @@ public class MainLogic : MonoBehaviour
 
         foreach(MPTKEvent midiEvent in midiEventList)
         {
+
+            // Trying to apply presets indicated in the file so we're not stuck with piano
+            // This is a bad way of doing this because we're betting on there only being one preset change...
+            // But it's the best we can do until the underlying C++ library implements patch change events.
+            // When that happens, we can treat them just like other MIDI events, pulling them with key presses.
+
+            if(midiEvent.Command == MPTKCommand.PatchChange) midiStreamPlayer.MPTK_ChannelPresetChange(midiEvent.Channel, midiEvent.Value);
+
             // Discard all non-note events
             // TODO : do we actually need tempo events to convert to ms in order to prevent anti-shadowing ?
             if(!(midiEvent.Command == MPTKCommand.NoteOff) && !(midiEvent.Command == MPTKCommand.NoteOn)) continue;
@@ -101,8 +121,8 @@ public class MainLogic : MonoBehaviour
             bool pressed = (midiEvent.Command == MPTKCommand.NoteOn && midiEvent.Velocity != 0) ? true : false;
 
             int eventTickMs = Mathf.RoundToInt(midiEvent.RealTime);
-            pushMPTKEvent(eventTickMs - latestEventTime, pressed, midiEvent.Value, midiEvent.Channel, midiEvent.Velocity);
-            if(eventTickMs > latestEventTime) latestEventTime = eventTickMs;
+            pushMPTKEvent(eventTickMs - latestEventTime, pressed, midiEvent.Value, midiEvent.Channel, midiEvent.Velocity); // push the relative tick (difference to latest event)
+            if(eventTickMs > latestEventTime) latestEventTime = eventTickMs; // update latest tick
         }
 
         finalizePerformer(); // tell C++ performer we're ready to play
@@ -125,7 +145,7 @@ public class MainLogic : MonoBehaviour
                 if(path == null) return;
                 else{
                     midiFilePath = path;
-                    midiFilePlayer.MPTK_MidiName = "file://" + midiFilePath;
+                    midiFilePlayer.MPTK_MidiName = "file://" + midiFilePath; // for some reason the MidiExternalPlayer wants a "file://" to start the path..???
                 }
             },
             new string[] {NativeFilePicker.ConvertExtensionToFileType("mid"), NativeFilePicker.ConvertExtensionToFileType("midi")}
@@ -145,6 +165,7 @@ public class MainLogic : MonoBehaviour
         }
 
         else{
+            midiStreamPlayer.MPTK_ClearAllSound();
             isPlaybackActive = true;
             midiFilePlayer.MPTK_Play();
         }
@@ -213,20 +234,29 @@ public class MainLogic : MonoBehaviour
             // Welkin 2023-01-06 Debug
 
             // SEAudioSource.Play();
-            foreach(Touch touch in Input.touches){
-                
-                // Welkin Note 2022-12-18: This won't work, the Update() will keep trigger the PlayEvent.
-                // if (touch.phase == TouchPhase.Began){
-                //     isPressed = true;
-                // }
-                // if (touch.phase == TouchPhase.Ended){
-                //     isPressed = false;
-                // }
-                // List<MPTKEvent> eventsToPlay = getEventsFromNative(isPressed, Convert.ToUInt16(touch.fingerId)); 
-                // midiStreamPlayer.MPTK_PlayEvent(eventsToPlay);
 
+            // This following line should mean : "exclude any touch that happens over a UI object" (i.e. buttons and menus)
+
+            // But...it actually excludes EVERY TOUCH except for releases !!!
+
+            var validTouches = Input.touches;//.Where(touch => !UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject(touch.fingerId)).ToArray();
+
+            foreach(Touch touch in validTouches){
 
                 List<MPTKEvent> eventsToPlay;
+                
+                // Welkin Note 2022-12-18: This won't work, the Update() will keep trigger the PlayEvent.
+                /*if (touch.phase == TouchPhase.Began || touch.phase == TouchPhase.Stationary){
+                     isPressed = true;
+                    print("Press");
+                }
+                if (touch.phase == TouchPhase.Ended){
+                    isPressed = false;
+                    print("Release");
+                }
+                eventsToPlay = getEventsFromNative(isPressed, Convert.ToUInt16(touch.fingerId)); 
+                midiStreamPlayer.MPTK_PlayEvent(eventsToPlay);*/
+
                 if (!isPressed){
                     isPressed = true;
                     eventsToPlay = getEventsFromNative(isPressed, Convert.ToUInt16(touch.fingerId));
