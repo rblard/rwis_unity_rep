@@ -21,7 +21,7 @@ public class MainLogic : MonoBehaviour
     public MidiExternalPlayer midiFilePlayer; // used to play back the file itself
     private String midiFilePath = null; // current path of the MIDI file
     private bool isPlaybackActive = false; // used to prevent simultaneous tapping and playback
-    private bool isPressed; // keeps track of screen press status
+    private bool isPressed = false; // keeps track of screen press status
 
     // ------------------------------------------------------------------------
     // ----------------------------CONSTANTS-----------------------------------
@@ -157,6 +157,8 @@ public class MainLogic : MonoBehaviour
     // Passive playback function used in the Play File button.
 
     public void playFile(){
+        // Welkin Note 2023-01-15: Debug
+        Debug.Log("PlayFile Button is Clicked. Current MPTK_MidiName is: " + midiFilePlayer.MPTK_MidiName);
         if(midiFilePlayer.MPTK_MidiName == null || midiFilePlayer.MPTK_MidiName == "") return;
 
         if(isPlaybackActive){
@@ -200,14 +202,25 @@ public class MainLogic : MonoBehaviour
     private List<MPTKEvent> getEventsFromNative(bool isPressed, uint fingerID)
     {
         ulong[] dataContainer = new ulong[MAX_EVENT_AMOUNT];
-        renderCommand(isPressed, fingerID, dataContainer); 
+        renderCommand(isPressed, fingerID, dataContainer);
+        
+        // Welkin note 2023-01-15: Debug why note off are not triggered
+        // Debug.Log("isPressed is: " + isPressed + ", first value in dataContainer is: " + dataContainer[0]);
+
+
         List<MPTKEvent> returnedEvents = new List<MPTKEvent>();
         foreach(ulong data in dataContainer) 
         {
-            if (data == 0) break; // this terminator is used because we don't have a resizable array. It's due to C# initializing arrays with 0.
+            if (data == 0) {
+                // Debug.Log("Break Happened");
+                break; // this terminator is used because we don't have a resizable array. It's due to C# initializing arrays with 0.
+            }
             MPTKEvent renderedEvent = makeMPTKEvent(data);
             returnedEvents.Add(renderedEvent);
         }
+
+        // Welkin note 2023-01-15: Debug why note off are not triggered
+        // Debug.Log("Finger ID is: " + fingerID + ", isPressed is: " + isPressed + ", length of returnedEvents is: " + returnedEvents.Count + ", first value in returnedEvents is: " + returnedEvents[0]);
         return returnedEvents;
     }
 
@@ -223,7 +236,7 @@ public class MainLogic : MonoBehaviour
         // Welkin Note 2022-12-18: Touch input initial settings
         Input.multiTouchEnabled = true;
         Input.simulateMouseWithTouches = true;
-        isPressed = false;
+        Debug.Log("Device Resolution is: " + Screen.currentResolution);
     }
 
     void Update()
@@ -232,7 +245,6 @@ public class MainLogic : MonoBehaviour
 
         if(touchCount > 0 && !isPlaybackActive){
             // Welkin 2023-01-06 Debug
-
             // SEAudioSource.Play();
 
             // This following line should mean : "exclude any touch that happens over a UI object" (i.e. buttons and menus)
@@ -241,33 +253,46 @@ public class MainLogic : MonoBehaviour
 
             var validTouches = Input.touches;//.Where(touch => !UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject(touch.fingerId)).ToArray();
 
-            foreach(Touch touch in validTouches){
-
+            foreach(Touch touch in validTouches){                
                 List<MPTKEvent> eventsToPlay;
                 
                 // Welkin Note 2022-12-18: This won't work, the Update() will keep trigger the PlayEvent.
-                /*if (touch.phase == TouchPhase.Began || touch.phase == TouchPhase.Stationary){
-                     isPressed = true;
-                    print("Press");
-                }
-                if (touch.phase == TouchPhase.Ended){
-                    isPressed = false;
-                    print("Release");
-                }
-                eventsToPlay = getEventsFromNative(isPressed, Convert.ToUInt16(touch.fingerId)); 
-                midiStreamPlayer.MPTK_PlayEvent(eventsToPlay);*/
+                // if (touch.phase == TouchPhase.Began || touch.phase == TouchPhase.Stationary){
+                //      isPressed = true;
+                //     print("Press");
+                // }
+                // if (touch.phase == TouchPhase.Ended){
+                //     isPressed = false;
+                //     print("Release");
+                // }
+                // eventsToPlay = getEventsFromNative(isPressed, Convert.ToUInt16(touch.fingerId)); 
+                // midiStreamPlayer.MPTK_PlayEvent(eventsToPlay);
 
-                if (!isPressed){
-                    isPressed = true;
-                    eventsToPlay = getEventsFromNative(isPressed, Convert.ToUInt16(touch.fingerId));
-                    midiStreamPlayer.MPTK_PlayEvent(eventsToPlay);
-                }
+                // Welkin Note 2023-01-15: Add a restriction area for Midi Play
+                if (touch.position.y < Screen.height * 0.80f){
+                    // Welkin Note 2023-01-15: isPressed Flag Solution.
+                    // The SEAudioSource triggered everytime my finger leave the screen.
+                    if (!isPressed){
+                        isPressed = true;
+                        eventsToPlay = getEventsFromNative(isPressed, Convert.ToUInt16(touch.fingerId));
+                        midiStreamPlayer.MPTK_PlayEvent(eventsToPlay);
+                    }
 
-                if(touch.phase == TouchPhase.Ended){
-                    isPressed = false;
-                    eventsToPlay = getEventsFromNative(isPressed, Convert.ToUInt16(touch.fingerId));
-                    midiStreamPlayer.MPTK_PlayEvent(eventsToPlay);
+                    if(touch.phase == TouchPhase.Ended){
+                        // Welkin Note 2023-01-15: Debug SEAudioSource
+                        // Debug.Log("When Release, FingerID is: " + touch.fingerId);
+                        // SEAudioSource.Play();
+                        // Welkin Note 2023-01-15: Using this as a patch for NoteOff not triggering bug now
+                        midiStreamPlayer.MPTK_ClearAllSound();
+
+                        isPressed = false;
+                        // Welkin Note 2023-01-15: Testing if it's the input parameter problem
+                        eventsToPlay = getEventsFromNative(isPressed, Convert.ToUInt16(touch.fingerId));
+
+                        midiStreamPlayer.MPTK_PlayEvent(eventsToPlay);
+                    }
                 }
+                
             }
         }
     }
