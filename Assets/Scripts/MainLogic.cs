@@ -281,7 +281,7 @@ public class MainLogic : MonoBehaviour
                     if(touch.phase == TouchPhase.Ended){
                         // Welkin Note 2023-01-15: Debug SEAudioSource
                         // Debug.Log("When Release, FingerID is: " + touch.fingerId);
-                        // SEAudioSource.Play();
+                        SEAudioSource.Play();
                         // Welkin Note 2023-01-15: Using this as a patch for NoteOff not triggering bug now
                         midiStreamPlayer.MPTK_ClearAllSound();
 
