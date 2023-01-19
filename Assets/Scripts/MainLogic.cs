@@ -50,31 +50,39 @@ public class MainLogic : MonoBehaviour
 
     // Static equivalent to performer.push()
     // Push an event to the performer's chronology 
+    private const string LIBRARY_NAME = "MidifilePerformer";
 
-    [DllImport("libMidifilePerformer", EntryPoint = "pushMPTKEvent")]
+    [DllImport(LIBRARY_NAME, CharSet = CharSet.Unicode, EntryPoint = "pushMPTKEvent")]
 
-    public static extern void pushMPTKEvent(long tick, bool pressed, int pitch, int channel, int velocity);
+    private static extern int pushMPTKEvent(long tick, bool pressed, int pitch, int channel, int velocity);
 
     // Static equivalent of performer.finalize()
     // Change performer's state from building a chronology to "ready to play"
 
-    [DllImport("libMidifilePerformer", EntryPoint = "finalizePerformer")]
+    [DllImport(LIBRARY_NAME, CharSet = CharSet.Unicode, EntryPoint = "finalizePerformer")]
 
-    public static extern void finalizePerformer();
+    private static extern void finalizePerformer();
 
     // Static equivalent of performer.clear()
     // Reset performer's state and clear its chronology
 
-    [DllImport("libMidifilePerformer", EntryPoint = "clearPerformer")]
+    [DllImport(LIBRARY_NAME, CharSet = CharSet.Unicode, EntryPoint = "clearPerformer")]
 
-    public static extern void clearPerformer();
+    private static extern void clearPerformer();
 
     // Static equivalent of performer.render()
     // Move one step forward in the chronology
 
-    [DllImport("libMidifilePerformer", EntryPoint = "renderCommand")]
+    [DllImport(LIBRARY_NAME, CharSet = CharSet.Unicode, EntryPoint = "renderCommand")]
 
-    public static extern void renderCommand(bool pressed, uint ID, ulong[] dataContainer);
+    private static extern void renderCommand(bool pressed, uint ID, ulong[] dataContainer);
+
+    // Welkin Note 2023-01-20: Testing Function from AndriodStudio
+    // [DllImport(LIBRARY_NAME, CharSet = CharSet.Unicode, EntryPoint = "getSomeNumber")]
+    // private static extern int getSomeNumber();
+
+    // [DllImport(LIBRARY_NAME, CharSet = CharSet.Unicode, EntryPoint = "AddSomeNumber")]
+    // private static extern int AddSomeNumber(int i, int j);
 
     // ------------------------------------------------------------------------
     // ------------------------PRIVATE UTIL METHODS----------------------------
@@ -110,7 +118,7 @@ public class MainLogic : MonoBehaviour
             // This is a bad way of doing this because we're betting on there only being one preset change...
             // But it's the best we can do until the underlying C++ library implements patch change events.
             // When that happens, we can treat them just like other MIDI events, pulling them with key presses.
-
+            Debug.Log("Pushing MidiEvent...");
             if(midiEvent.Command == MPTKCommand.PatchChange) midiStreamPlayer.MPTK_ChannelPresetChange(midiEvent.Channel, midiEvent.Value);
 
             // Discard all non-note events
@@ -121,7 +129,10 @@ public class MainLogic : MonoBehaviour
             bool pressed = (midiEvent.Command == MPTKCommand.NoteOn && midiEvent.Velocity != 0) ? true : false;
 
             int eventTickMs = Mathf.RoundToInt(midiEvent.RealTime);
-            pushMPTKEvent(eventTickMs - latestEventTime, pressed, midiEvent.Value, midiEvent.Channel, midiEvent.Velocity); // push the relative tick (difference to latest event)
+            // Welkin note 2023-01-20: test event
+            int uint64_event = pushMPTKEvent(eventTickMs - latestEventTime, pressed, midiEvent.Value, midiEvent.Channel, midiEvent.Velocity); // push the relative tick (difference to latest event)
+            Debug.Log("Event is:" + uint64_event);
+
             if(eventTickMs > latestEventTime) latestEventTime = eventTickMs; // update latest tick
         }
 
@@ -132,6 +143,7 @@ public class MainLogic : MonoBehaviour
         midiStreamPlayer.MPTK_ClearAllSound();
         midiFilePlayer.MPTK_Stop();
         midiFilePlayer.MPTK_ClearAllSound();
+        Debug.Log("Refresh Midifile Complete");
     }
 
     // Wrapper around the NativeFilePicker library to update the current file path
@@ -151,6 +163,7 @@ public class MainLogic : MonoBehaviour
             new string[] {NativeFilePicker.ConvertExtensionToFileType("mid"), NativeFilePicker.ConvertExtensionToFileType("midi")}
         );
 
+        Debug.Log("Start to Refresh Midifile");
         refreshMidiFile();
     }
 
@@ -220,7 +233,7 @@ public class MainLogic : MonoBehaviour
         }
 
         // Welkin note 2023-01-15: Debug why note off are not triggered
-        // Debug.Log("Finger ID is: " + fingerID + ", isPressed is: " + isPressed + ", length of returnedEvents is: " + returnedEvents.Count + ", first value in returnedEvents is: " + returnedEvents[0]);
+        // Debug.Log("Finger ID is: " + fingerID + ", length of returnedEvents is: " + returnedEvents.Count + ", 1 value in returnedEvents: " + returnedEvents[0] + ", 1 value in datacontainer: " + dataContainer[0]);
         return returnedEvents;
     }
 
@@ -275,6 +288,7 @@ public class MainLogic : MonoBehaviour
                     if (!isPressed){
                         isPressed = true;
                         eventsToPlay = getEventsFromNative(isPressed, Convert.ToUInt16(touch.fingerId));
+                        Debug.Log(eventsToPlay[0]);
                         midiStreamPlayer.MPTK_PlayEvent(eventsToPlay);
                     }
 
@@ -282,13 +296,16 @@ public class MainLogic : MonoBehaviour
                         // Welkin Note 2023-01-15: Debug SEAudioSource
                         // Debug.Log("When Release, FingerID is: " + touch.fingerId);
                         SEAudioSource.Play();
+
+                        // Welkin Note 2023-01-20: Testing for .so file.
+                        // Debug.Log("Getting Some Number from Andriod .so: " + getSomeNumber());
+
                         // Welkin Note 2023-01-15: Using this as a patch for NoteOff not triggering bug now
-                        midiStreamPlayer.MPTK_ClearAllSound();
+                        // midiStreamPlayer.MPTK_ClearAllSound();
 
                         isPressed = false;
                         // Welkin Note 2023-01-15: Testing if it's the input parameter problem
                         eventsToPlay = getEventsFromNative(isPressed, Convert.ToUInt16(touch.fingerId));
-
                         midiStreamPlayer.MPTK_PlayEvent(eventsToPlay);
                     }
                 }
