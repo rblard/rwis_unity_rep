@@ -6,12 +6,13 @@ using UnityEngine;
 using MidiPlayerTK;
 using NativeFilePickerNamespace;
 using System.Runtime.InteropServices;
+using TMPro;
 
 public class MainLogic : MonoBehaviour
 {
     // Welkin 2023-01-06 Debug
     public AudioSource SEAudioSource;
-    
+
     // ------------------------------------------------------------------------
     // ----------------------------COMPONENTS----------------------------------
     // ------------------------------------------------------------------------
@@ -21,6 +22,7 @@ public class MainLogic : MonoBehaviour
     public MidiExternalPlayer midiFilePlayer; // used to play back the file itself
     private String midiFilePath = null; // current path of the MIDI file
     private bool isPlaybackActive = false; // used to prevent simultaneous tapping and playback
+    private bool replayFlag = false; // used to keep track of rewind command in pause state
     private bool isPressed = false; // keeps track of screen press status
 
     // ------------------------------------------------------------------------
@@ -31,7 +33,7 @@ public class MainLogic : MonoBehaviour
 
     private static readonly uint MAX_EVENT_AMOUNT = 4096;
     // Having more than 16*2*128 = 4096 events on one press would mean EVERY note on EVERY channel triggered on AND off...and then some !
-    // Look, I know this is ugly, but I can't seem to find how to pass resizable arrays so far...so this will do 
+    // Look, I know this is ugly, but I can't seem to find how to pass resizable arrays so far...so this will do
     // TODO : Of course, change the array into a resizable one.
 
     // Magic values for MPTKEvent construction
@@ -49,7 +51,7 @@ public class MainLogic : MonoBehaviour
     // ------------------------------------------------------------------------
 
     // Static equivalent to performer.push()
-    // Push an event to the performer's chronology 
+    // Push an event to the performer's chronology
     private const string LIBRARY_NAME = "MidifilePerformer";
 
     [DllImport(LIBRARY_NAME, CharSet = CharSet.Unicode, EntryPoint = "pushMPTKEvent")]
@@ -107,7 +109,7 @@ public class MainLogic : MonoBehaviour
         midiFileLoader.MPTK_Load(midiFilePath);
         List<MPTKEvent> midiEventList = midiFileLoader.MPTK_ReadMidiEvents();
 
-        clearPerformer(); 
+        clearPerformer();
 
         int latestEventTime = 0; // we're going to convert ticks to relative
 
@@ -146,46 +148,6 @@ public class MainLogic : MonoBehaviour
         Debug.Log("Refresh Midifile Complete");
     }
 
-    // Wrapper around the NativeFilePicker library to update the current file path
-    // End with a refresh
-
-    public void loadFile(){
-        if(NativeFilePicker.IsFilePickerBusy()) return;
-
-        NativeFilePicker.Permission permission = NativeFilePicker.PickFile( 
-            (path) => {
-                if(path == null) return;
-                else{
-                    midiFilePath = path;
-                    midiFilePlayer.MPTK_MidiName = "file://" + midiFilePath; // for some reason the MidiExternalPlayer wants a "file://" to start the path..???
-                }
-            },
-            new string[] {NativeFilePicker.ConvertExtensionToFileType("mid"), NativeFilePicker.ConvertExtensionToFileType("midi")}
-        );
-
-        Debug.Log("Start to Refresh Midifile");
-        refreshMidiFile();
-    }
-
-    // Passive playback function used in the Play File button.
-
-    public void playFile(){
-        // Welkin Note 2023-01-15: Debug
-        Debug.Log("PlayFile Button is Clicked. Current MPTK_MidiName is: " + midiFilePlayer.MPTK_MidiName);
-        if(midiFilePlayer.MPTK_MidiName == null || midiFilePlayer.MPTK_MidiName == "") return;
-
-        if(isPlaybackActive){
-            isPlaybackActive = false;
-            midiFilePlayer.MPTK_Pause();
-        }
-
-        else{
-            midiStreamPlayer.MPTK_ClearAllSound();
-            isPlaybackActive = true;
-            midiFilePlayer.MPTK_Play();
-        }
-    }
-
     // A "pseudo-constructor" that creates an MPTK event from a note on/off MIDI message stored as a ulong.
     // That ulong was obtained from the NoteData struct on the C++ side.
 
@@ -216,13 +178,13 @@ public class MainLogic : MonoBehaviour
     {
         ulong[] dataContainer = new ulong[MAX_EVENT_AMOUNT];
         renderCommand(isPressed, fingerID, dataContainer);
-        
+
         // Welkin note 2023-01-15: Debug why note off are not triggered
         // Debug.Log("isPressed is: " + isPressed + ", first value in dataContainer is: " + dataContainer[0]);
 
 
         List<MPTKEvent> returnedEvents = new List<MPTKEvent>();
-        foreach(ulong data in dataContainer) 
+        foreach(ulong data in dataContainer)
         {
             if (data == 0) {
                 // Debug.Log("Break Happened");
@@ -238,12 +200,76 @@ public class MainLogic : MonoBehaviour
     }
 
     // ------------------------------------------------------------------------
+    // --------------------BUTTON ONCLICK FUNCTIONS----------------------------
+    // ------------------------------------------------------------------------
+
+    // "Load File" onclick
+    // Wrapper around the NativeFilePicker library to update the current file path
+    // End with a refresh
+
+    public void loadFile(){
+        if(NativeFilePicker.IsFilePickerBusy()) return;
+
+        NativeFilePicker.Permission permission = NativeFilePicker.PickFile(
+            (path) => {
+                if(path == null) return;
+                else{
+                    midiFilePath = path;
+                    midiFilePlayer.MPTK_MidiName = "file://" + midiFilePath; // for some reason the MidiExternalPlayer wants a "file://" to start the path..???
+                }
+            },
+            new string[] {NativeFilePicker.ConvertExtensionToFileType("mid"), NativeFilePicker.ConvertExtensionToFileType("midi")}
+        );
+
+        Debug.Log("Start to Refresh Midifile");
+        refreshMidiFile();
+    }
+
+    // "Play File" onclick
+    // Passive playback function using the External Player
+
+    public void playFile(){
+        // Welkin Note 2023-01-15: Debug
+        Debug.Log("PlayFile Button is Clicked. Current MPTK_MidiName is: " + midiFilePlayer.MPTK_MidiName);
+        if(midiFilePlayer.MPTK_MidiName == null || midiFilePlayer.MPTK_MidiName == "") return;
+
+        TMP_Text buttonText = GameObject.Find("PlayButton").GetComponentInChildren<TMP_Text>();
+        print(buttonText.text);
+
+        if(isPlaybackActive){
+            isPlaybackActive = false;
+            midiFilePlayer.MPTK_Pause();
+            buttonText.text = "Play File";
+        }
+
+        else{
+            midiStreamPlayer.MPTK_ClearAllSound();
+            isPlaybackActive = true;
+            midiFilePlayer.MPTK_UnPause();
+            if(replayFlag){
+                replayFlag = false;
+                midiFilePlayer.MPTK_RePlay();
+            }
+            else midiFilePlayer.MPTK_Play();
+            buttonText.text = "Pause File";
+        }
+    }
+
+    // "Rewind File (Player)" onclick
+    // Simply call RePlay. No, calling it from the midiFilePlayer object doesn't work.
+
+    public void rewindPlayer(){
+        if(isPlaybackActive) midiFilePlayer.MPTK_RePlay();
+        else replayFlag = true;
+    }
+
+    // ------------------------------------------------------------------------
     // --------------------------UNITY BEHAVIOUR-------------------------------
     // ------------------------------------------------------------------------
 
     void Start()
     {
-        clearPerformer(); // apparently if we don't do this the file keeps its state between restarts ??? 
+        clearPerformer(); // apparently if we don't do this the file keeps its state between restarts ???
         midiStreamPlayer.MPTK_InitSynth();
 
         // Welkin Note 2022-12-18: Touch input initial settings
@@ -253,7 +279,7 @@ public class MainLogic : MonoBehaviour
     }
 
     void Update()
-    {   
+    {
         int touchCount = Input.touchCount;
 
         if(touchCount > 0 && !isPlaybackActive){
@@ -266,9 +292,9 @@ public class MainLogic : MonoBehaviour
 
             var validTouches = Input.touches;//.Where(touch => !UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject(touch.fingerId)).ToArray();
 
-            foreach(Touch touch in validTouches){                
+            foreach(Touch touch in validTouches){
                 List<MPTKEvent> eventsToPlay;
-                
+
                 // Welkin Note 2022-12-18: This won't work, the Update() will keep trigger the PlayEvent.
                 // if (touch.phase == TouchPhase.Began || touch.phase == TouchPhase.Stationary){
                 //      isPressed = true;
@@ -278,7 +304,7 @@ public class MainLogic : MonoBehaviour
                 //     isPressed = false;
                 //     print("Release");
                 // }
-                // eventsToPlay = getEventsFromNative(isPressed, Convert.ToUInt16(touch.fingerId)); 
+                // eventsToPlay = getEventsFromNative(isPressed, Convert.ToUInt16(touch.fingerId));
                 // midiStreamPlayer.MPTK_PlayEvent(eventsToPlay);
 
                 // Welkin Note 2023-01-15: Add a restriction area for Midi Play
@@ -309,7 +335,7 @@ public class MainLogic : MonoBehaviour
                         midiStreamPlayer.MPTK_PlayEvent(eventsToPlay);
                     }
                 }
-                
+
             }
         }
     }
