@@ -187,7 +187,7 @@ public class MainLogic : MonoBehaviour
         foreach(ulong data in dataContainer)
         {
             if (data == 0) {
-                // Debug.Log("Break Happened");
+                Debug.Log("Break Happened");
                 break; // this terminator is used because we don't have a resizable array. It's due to C# initializing arrays with 0.
             }
             MPTKEvent renderedEvent = makeMPTKEvent(data);
@@ -195,6 +195,10 @@ public class MainLogic : MonoBehaviour
         }
 
         // Welkin note 2023-01-15: Debug why note off are not triggered
+        foreach( var x in dataContainer) {
+            Debug.Log("Event in dataContainer: " + x.ToString());
+        }
+        Debug.Log("returnedEvents.Count: " + returnedEvents.Count);
         // Debug.Log("Finger ID is: " + fingerID + ", length of returnedEvents is: " + returnedEvents.Count + ", 1 value in returnedEvents: " + returnedEvents[0] + ", 1 value in datacontainer: " + dataContainer[0]);
         return returnedEvents;
     }
@@ -314,7 +318,7 @@ public class MainLogic : MonoBehaviour
                     if (!isPressed){
                         isPressed = true;
                         eventsToPlay = getEventsFromNative(isPressed, Convert.ToUInt16(touch.fingerId));
-                        Debug.Log(eventsToPlay[0]);
+                        Debug.Log("Length of eventsToPlay is: " + eventsToPlay.Count);
                         midiStreamPlayer.MPTK_PlayEvent(eventsToPlay);
                     }
 
