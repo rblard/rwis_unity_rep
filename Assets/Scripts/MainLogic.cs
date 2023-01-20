@@ -77,7 +77,7 @@ public class MainLogic : MonoBehaviour
 
     [DllImport(LIBRARY_NAME, CharSet = CharSet.Unicode, EntryPoint = "renderCommand")]
 
-    private static extern void renderCommand(bool pressed, uint ID, ulong[] dataContainer);
+    private static extern int renderCommand(bool pressed, uint ID, ulong[] dataContainer);
 
     // Welkin Note 2023-01-20: Testing Function from AndriodStudio
     // [DllImport(LIBRARY_NAME, CharSet = CharSet.Unicode, EntryPoint = "getSomeNumber")]
@@ -177,8 +177,8 @@ public class MainLogic : MonoBehaviour
     private List<MPTKEvent> getEventsFromNative(bool isPressed, uint fingerID)
     {
         ulong[] dataContainer = new ulong[MAX_EVENT_AMOUNT];
-        renderCommand(isPressed, fingerID, dataContainer);
-
+        int renderCommandDebugInt = renderCommand(isPressed, fingerID, dataContainer);
+        Debug.Log("renderCommandDebugInt (Number of Iteration): " + renderCommandDebugInt);
         // Welkin note 2023-01-15: Debug why note off are not triggered
         // Debug.Log("isPressed is: " + isPressed + ", first value in dataContainer is: " + dataContainer[0]);
 
