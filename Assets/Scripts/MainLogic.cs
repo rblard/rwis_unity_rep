@@ -208,10 +208,10 @@ public class MainLogic : MonoBehaviour
     // ------------------------------------------------------------------------
 
     // "Load File" onclick
-    // Wrapper around the NativeFilePicker library to update the current file path
-    // End with a refresh
+    // Wrapper around NativeFilePicker ; call the refresher IN the callback
 
     public void loadFile(){
+
         if(NativeFilePicker.IsFilePickerBusy()) return;
 
         NativeFilePicker.Permission permission = NativeFilePicker.PickFile(
@@ -220,13 +220,12 @@ public class MainLogic : MonoBehaviour
                 else{
                     midiFilePath = path;
                     midiFilePlayer.MPTK_MidiName = "file://" + midiFilePath; // for some reason the MidiExternalPlayer wants a "file://" to start the path..???
+                    Debug.Log("Start to Refresh Midifile");
+                    refreshMidiFile();
                 }
             },
             new string[] {NativeFilePicker.ConvertExtensionToFileType("mid"), NativeFilePicker.ConvertExtensionToFileType("midi")}
         );
-
-        Debug.Log("Start to Refresh Midifile");
-        refreshMidiFile();
     }
 
     // "Play File" onclick
@@ -325,7 +324,7 @@ public class MainLogic : MonoBehaviour
                     if(touch.phase == TouchPhase.Ended){
                         // Welkin Note 2023-01-15: Debug SEAudioSource
                         // Debug.Log("When Release, FingerID is: " + touch.fingerId);
-                        SEAudioSource.Play();
+                        // SEAudioSource.Play();
 
                         // Welkin Note 2023-01-20: Testing for .so file.
                         // Debug.Log("Getting Some Number from Andriod .so: " + getSomeNumber());
