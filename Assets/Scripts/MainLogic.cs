@@ -195,9 +195,9 @@ public class MainLogic : MonoBehaviour
         }
 
         // Welkin note 2023-01-15: Debug why note off are not triggered
-        foreach( var x in dataContainer) {
-            Debug.Log("Event in dataContainer: " + x.ToString());
-        }
+        // foreach( var x in dataContainer) {
+        //     Debug.Log("Event in dataContainer: " + x.ToString());
+        // }
         Debug.Log("returnedEvents.Count: " + returnedEvents.Count);
         // Debug.Log("Finger ID is: " + fingerID + ", length of returnedEvents is: " + returnedEvents.Count + ", 1 value in returnedEvents: " + returnedEvents[0] + ", 1 value in datacontainer: " + dataContainer[0]);
         return returnedEvents;
@@ -330,7 +330,7 @@ public class MainLogic : MonoBehaviour
                         // Debug.Log("Getting Some Number from Andriod .so: " + getSomeNumber());
 
                         // Welkin Note 2023-01-15: Using this as a patch for NoteOff not triggering bug now
-                        // midiStreamPlayer.MPTK_ClearAllSound();
+                        midiStreamPlayer.MPTK_ClearAllSound();
 
                         isPressed = false;
                         // Welkin Note 2023-01-15: Testing if it's the input parameter problem
