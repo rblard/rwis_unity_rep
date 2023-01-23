@@ -7,19 +7,21 @@ using MidiParser;
 
 public class MainScript : MonoBehaviour
 {
-
+    // a list 
     public List<List<int>> chronology ;
     public int i;
     public int N;
     public AudioClip[] sounds;
     public List<AudioSource> audioSources;
 
-   
+
+   public string midiFilePath;
 
     public void Start()
     {
         i=0;
         N = 10;
+        midiFilePath=null;
         audioSources = new List<AudioSource>();
         for (int k = 0; k < N; k++)
         {
@@ -27,7 +29,6 @@ public class MainScript : MonoBehaviour
             AudioSource audioSource = audioObject.AddComponent<AudioSource>();
             audioSources.Add(audioSource);
         }   
-        chronology = GetChronology();
         sounds = Resources.LoadAll<AudioClip>("Sounds");
 
     }
@@ -35,6 +36,7 @@ public class MainScript : MonoBehaviour
 
     public void KeyPressed()
     {
+        if(midiFilePath==null) return;
         List<int> events = new List<int>(chronology[i]);
         foreach(int n in events)
         {
@@ -45,7 +47,8 @@ public class MainScript : MonoBehaviour
     }
 
     public void Playnote(int n)
-    {   
+    {
+
         int k = (n+10)%89;
         bool full=true;
         for(int c=0;c<N;c++)
@@ -66,6 +69,23 @@ public class MainScript : MonoBehaviour
         }
     }
 
+    public void OpenFile()
+    {
+
+        if(NativeFilePicker.IsFilePickerBusy()) return;
+
+        NativeFilePicker.Permission permission = NativeFilePicker.PickFile(
+            (path) => {
+                if(path == null) return;
+                else{
+                    midiFilePath = path;
+                }
+            },
+            new string[] {NativeFilePicker.ConvertExtensionToFileType("mid"), NativeFilePicker.ConvertExtensionToFileType("midi")}
+        );
+        chronology = GetChronology();
+    }
+
     
     private List<List<int>> GetChronology()
     {
@@ -73,7 +93,7 @@ public class MainScript : MonoBehaviour
         List<int> events = new List<int>();
         int t_1 = 0;
         int t = 0;
-        var midiFile = new MidiFile("Assets/for_elise_by_beethoven.mid");
+        var midiFile = new MidiFile(midiFilePath);
         foreach (var track in midiFile.Tracks)
             {
                 foreach (var midiEvent in track.MidiEvents)
